@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/sdd/__init__.py
+src/sdd/cli.py
+src/sdd/config.py
+src/sdd/detector.py
+src/sdd/io_utils.py
+src/simple_drone_detector.egg-info/PKG-INFO
+src/simple_drone_detector.egg-info/SOURCES.txt
+src/simple_drone_detector.egg-info/dependency_links.txt
+src/simple_drone_detector.egg-info/top_level.txt

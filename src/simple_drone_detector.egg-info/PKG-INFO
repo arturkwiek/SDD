@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: simple-drone-detector
+Version: 0.1.0
+Summary: Simple Drone Detector (SDD)
+Requires-Python: >=3.10

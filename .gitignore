@@ -1,0 +1,20 @@
+# Python venvs
+.venv/
+.venv-win/
+
+# VS Code settings
+.vscode/
+
+# Copilot local instructions (only used locally)
+.github/copilot-instructions.md
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Generated artefacts
+*.mp4
+*.json
+*.csv
+*_label_counts.txt
+*_events.csv
