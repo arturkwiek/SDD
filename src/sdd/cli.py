@@ -39,6 +39,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--csv-out", default="detections.csv", help="Ścieżka zapisu wyników CSV.")
 
     parser.add_argument(
+        "--no-stats",
+        action="store_true",
+        help="Wyłącza wyświetlanie statystyk (klatka, czas, liczba detekcji, FPS) na obrazie.",
+    )
+
+    parser.add_argument(
         "--from-samples",
         action="store_true",
         help=(
@@ -80,6 +86,61 @@ def draw_detections(frame, detections: List[Detection]):
         )
 
 
+def draw_stats_overlay(
+    frame,
+    frame_index: int,
+    timestamp: float,
+    frame_detections: int,
+    total_detections: int,
+    source_fps: float,
+    frame_threat_level: str,
+    frame_max_threat_score: float,
+    total_frames: int,
+):
+    """Rysuje proste statystyki (w tym poziom zagrożenia) w lewym górnym rogu klatki."""
+
+    processing_fps = (frame_index / timestamp) if timestamp > 0 else 0.0
+
+    lines = [
+        f"Frame: {frame_index}",
+        f"Time: {timestamp:0.2f}s",
+        f"Detections: {frame_detections} (total {total_detections})",
+    ]
+
+    if total_frames and total_frames > 0:
+        # Użyj frame_index+1, bo index startuje od 0
+        current = frame_index + 1
+        denom = max(total_frames, 1)
+        progress = 100.0 * current / denom
+        lines.append(f"Progress: {current}/{total_frames} ({progress:0.1f}%)")
+
+    if frame_detections > 0:
+        lines.append(
+            f"Threat: {frame_threat_level.upper()} ({frame_max_threat_score:0.2f})"
+        )
+
+    if source_fps and source_fps > 0:
+        lines.append(f"Source FPS: {source_fps:0.1f}")
+    if processing_fps > 0:
+        lines.append(f"Proc FPS: {processing_fps:0.1f}")
+
+    x = 10
+    y_start = 20
+    dy = 18
+    for i, text in enumerate(lines):
+        y = y_start + i * dy
+        cv2.putText(
+            frame,
+            text,
+            (x, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 255, 255),
+            1,
+            cv2.LINE_AA,
+        )
+
+
 def run() -> None:
     args = parse_args()
 
@@ -103,6 +164,7 @@ def run() -> None:
         output_video_path=args.video_out,
         output_json_path=args.json_out,
         output_csv_path=args.csv_out,
+        show_stats=not args.no_stats,
     )
 
     print(f"[SDD] Model: {det_cfg.model_name}, conf>={det_cfg.conf_threshold}, iou>={det_cfg.iou_threshold}")
@@ -122,10 +184,12 @@ def run() -> None:
     fps = cap.get(cv2.CAP_PROP_FPS) or 0
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
 
     print(
         f"[SDD][INFO] Parametry źródła: fps={fps:.2f} (0=nieznane), "
-        f"rozmiar={width}x{height}"
+        f"rozmiar={width}x{height}, "
+        f"liczba_klatek={total_frames if total_frames > 0 else 'nieznana'}"
     )
 
     if rt_cfg.save_video and fps > 0 and width > 0 and height > 0:
@@ -167,6 +231,33 @@ def run() -> None:
 
         if rt_cfg.show_preview or writer is not None:
             draw_detections(frame, detections)
+            if rt_cfg.show_stats:
+                if detections:
+                    level_order = {"low": 0, "medium": 1, "high": 2}
+                    top_det = max(
+                        detections,
+                        key=lambda d: (
+                            level_order.get(d.threat_level, 0),
+                            d.threat_score,
+                        ),
+                    )
+                    frame_level = top_det.threat_level
+                    frame_max_threat = top_det.threat_score
+                else:
+                    frame_level = "none"
+                    frame_max_threat = 0.0
+
+                draw_stats_overlay(
+                    frame,
+                    frame_index,
+                    timestamp,
+                    len(detections),
+                    len(all_detections),
+                    fps,
+                    frame_level,
+                    frame_max_threat,
+                    total_frames,
+                )
 
         if writer is not None:
             writer.write(frame)

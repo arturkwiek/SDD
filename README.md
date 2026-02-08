@@ -86,6 +86,7 @@ pliku `wyniki_events.csv`.
 - `--json-out` – ścieżka pliku JSON z detekcjami (domyślnie `detections.json`)
 - `--csv-out` – ścieżka pliku CSV z detekcjami (domyślnie `detections.csv`)
 - `--from-samples` – interpretuje `source` względem katalogu `SAMPLE_PATH`
+ - `--no-stats` – wyłącza proste statystyki na obrazie (domyślnie są włączone)
 
 ## Dalszy rozwój
 

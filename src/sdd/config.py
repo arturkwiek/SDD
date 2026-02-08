@@ -28,3 +28,4 @@ class RuntimeConfig:
     output_video_path: str = "output_detection.mp4"
     output_json_path: str = "detections.json"
     output_csv_path: str = "detections.csv"
+    show_stats: bool = True

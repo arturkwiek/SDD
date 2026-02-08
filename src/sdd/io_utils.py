@@ -64,6 +64,9 @@ def save_events_summary(detections: Iterable[Detection], path: str) -> None:
         "min_score",
         "max_score",
         "mean_score",
+        "max_threat_score",
+        "mean_threat_score",
+        "dominant_threat_level",
     ]
 
     if not detections_list:
@@ -87,6 +90,9 @@ def save_events_summary(detections: Iterable[Detection], path: str) -> None:
                 "min_score": det.score,
                 "max_score": det.score,
                 "score_sum": 0.0,
+                "max_threat_score": det.threat_score,
+                "threat_score_sum": 0.0,
+                "threat_level_counts": {"low": 0, "medium": 0, "high": 0},
             }
             stats[label] = s
 
@@ -108,12 +114,28 @@ def save_events_summary(detections: Iterable[Detection], path: str) -> None:
 
         s["score_sum"] += det.score
 
+        # Threat-related stats
+        if det.threat_score > s["max_threat_score"]:
+            s["max_threat_score"] = det.threat_score
+        s["threat_score_sum"] += det.threat_score
+        if det.threat_level in s["threat_level_counts"]:
+            s["threat_level_counts"][det.threat_level] += 1
+
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for label in sorted(stats.keys()):
             s = stats[label]
             mean_score = s["score_sum"] / s["count"] if s["count"] > 0 else 0.0
+            mean_threat_score = (
+                s["threat_score_sum"] / s["count"] if s["count"] > 0 else 0.0
+            )
+
+            level_counts = s["threat_level_counts"]
+            dominant_level = max(
+                ("low", "medium", "high"),
+                key=lambda lvl: level_counts.get(lvl, 0),
+            )
             writer.writerow(
                 {
                     "label": label,
@@ -125,5 +147,8 @@ def save_events_summary(detections: Iterable[Detection], path: str) -> None:
                     "min_score": float(s["min_score"]),
                     "max_score": float(s["max_score"]),
                     "mean_score": float(mean_score),
+                    "max_threat_score": float(s["max_threat_score"]),
+                    "mean_threat_score": float(mean_threat_score),
+                    "dominant_threat_level": dominant_level,
                 }
             )

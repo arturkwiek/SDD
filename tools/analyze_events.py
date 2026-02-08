@@ -37,8 +37,14 @@ def main() -> None:
 
     print(f"[SDD][INFO] Wczytano {len(rows)} wierszy podsumowania z {path}.")
     print()
-    print("Label; count; first_ts; last_ts; min_score; max_score; mean_score")
-    print("-----; -----; --------; --------; ---------; ---------; ----------")
+    print(
+        "Label; count; first_ts; last_ts; min_score; max_score; "
+        "mean_score; max_threat; mean_threat; dom_level"
+    )
+    print(
+        "-----; -----; --------; --------; ---------; ---------; "
+        "----------; ---------; -----------; ---------"
+    )
 
     # Sort by count descending
     rows_sorted = sorted(
@@ -55,10 +61,14 @@ def main() -> None:
         min_score = float(r.get("min_score", 0.0))
         max_score = float(r.get("max_score", 0.0))
         mean_score = float(r.get("mean_score", 0.0))
+        max_threat = float(r.get("max_threat_score", 0.0))
+        mean_threat = float(r.get("mean_threat_score", 0.0))
+        dom_level = r.get("dominant_threat_level", "?")
 
         print(
             f"{label}; {count}; {first_ts:8.3f}; {last_ts:8.3f}; "
-            f"{min_score:9.3f}; {max_score:9.3f}; {mean_score:10.3f}"
+            f"{min_score:9.3f}; {max_score:9.3f}; {mean_score:10.3f}; "
+            f"{max_threat:9.3f}; {mean_threat:11.3f}; {dom_level}"
         )
 
     print()
