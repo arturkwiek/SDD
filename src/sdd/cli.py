@@ -69,10 +69,57 @@ def open_source(source: str) -> cv2.VideoCapture:
     return cap
 
 
+def classify_label_safety(label: str) -> str:
+    """Heurystyczna kategoryzacja etykiety na safe/medium/danger.
+
+    Używana do kolorowania ramek wokół obiektów na wideo.
+    """
+
+    name = (label or "").strip().lower()
+
+    dangerous_keywords = {
+        "airplane",
+        "helicopter",
+        "bird",
+        "kite",
+        "balloon",
+        "drone",
+        "paraglider",
+        "hang glider",
+    }
+
+    medium_keywords = {
+        "car",
+        "truck",
+        "bus",
+        "train",
+        "boat",
+        "ship",
+        "motorcycle",
+        "bicycle",
+        "parking meter",
+    }
+
+    if name in dangerous_keywords:
+        return "danger"
+    if name in medium_keywords:
+        return "medium"
+    return "safe"
+
+
 def draw_detections(frame, detections: List[Detection]):
     for det in detections:
         x1, y1, x2, y2 = map(int, [det.x1, det.y1, det.x2, det.y2])
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+        safety = classify_label_safety(det.label)
+        if safety == "danger":
+            color = (0, 0, 255)  # red
+        elif safety == "medium":
+            color = (0, 255, 255)  # yellow
+        else:
+            color = (0, 255, 0)  # green
+
+        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
         label = f"{det.label} {det.score:.2f}"
         cv2.putText(
             frame,
@@ -80,7 +127,7 @@ def draw_detections(frame, detections: List[Detection]):
             (x1, max(0, y1 - 5)),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
-            (0, 255, 0),
+            color,
             1,
             cv2.LINE_AA,
         )
