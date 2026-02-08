@@ -70,6 +70,23 @@ Wyniki pojedynczego uruchomienia są zapisywane jako:
 - `detections_events.csv` – podsumowanie per klasa (liczba, czasy pierwszej/ostatniej detekcji, statystyki score)
 - `detections_label_counts.txt` – lista klas z liczbą detekcji (wygodne do szybkiego podejrzenia)
 
+Plik `*_events.csv` jest tworzony automatycznie na podstawie ścieżki podanej
+przez `--csv-out`. Przykładowo `--csv-out wyniki.csv` spowoduje utworzenie
+pliku `wyniki_events.csv`.
+
+### Główne opcje CLI
+
+- `--model` – ścieżka/nazwa checkpointu YOLO (domyślnie `yolov8n.pt`)
+- `--conf` – próg pewności detekcji (domyślnie `0.35`)
+- `--iou` – próg IoU dla NMS (domyślnie `0.45`)
+- `--target-classes` – lista nazw klas, które mają być zachowane (np. `drone`)
+- `--no-preview` – wyłącza okno podglądu OpenCV
+- `--save-video` – włącza zapis wideo z narysowanymi detekcjami
+- `--video-out` – ścieżka pliku wideo wyjściowego (domyślnie `output_detection.mp4`)
+- `--json-out` – ścieżka pliku JSON z detekcjami (domyślnie `detections.json`)
+- `--csv-out` – ścieżka pliku CSV z detekcjami (domyślnie `detections.csv`)
+- `--from-samples` – interpretuje `source` względem katalogu `SAMPLE_PATH`
+
 ## Dalszy rozwój
 
 - Podmiana modelu na specjalistyczny model dronów (zmiana `--model` lub konfiguracji).
