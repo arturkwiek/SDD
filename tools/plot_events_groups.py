@@ -7,6 +7,8 @@ from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 
+from sdd.threat_utils import classify_label_safety
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -83,52 +85,6 @@ def group_by_threat_level(
         groups[level].append((label, value, count))
 
     return groups
-
-
-def classify_label_safety(label: str) -> str:
-    """Klasyfikuje etykietę na kategorie bezpieczeństwa.
-
-    Z założenia ma to być prosta, domenowa heurystyka:
-    - "danger" (czerwony): obiekty latające / potencjalnie niebezpieczne
-      jak airplane, helicopter, bird, kite, balloon, drone.
-    - "medium" (żółty): pojazdy lądowe i większa infrastruktura (car, truck, bus,
-      train, boat, etc.).
-    - "safe" (zielony): reszta / raczej nieistotne z punktu widzenia zagrożenia.
-    """
-
-    name = (label or "").strip().lower()
-
-    dangerous_keywords = {
-        "airplane",
-        "helicopter",
-        "bird",
-        "kite",
-        "balloon",
-        "drone",
-        "paraglider",
-        "hang glider",
-    }
-
-    medium_keywords = {
-        "car",
-        "truck",
-        "bus",
-        "train",
-        "boat",
-        "ship",
-        "motorcycle",
-        "bicycle",
-        "parking meter",
-    }
-
-    if name in dangerous_keywords:
-        return "danger"
-    if name in medium_keywords:
-        return "medium"
-
-    return "safe"
-
-
 def plot_groups(
     groups: Dict[str, List[Tuple[str, float, int]]], metric: str, top_n: int
 ) -> None:

@@ -9,6 +9,7 @@ import cv2
 from .config import DetectorConfig, RuntimeConfig, SAMPLE_PATH
 from .detector import YoloDetector, Detection
 from .io_utils import save_detections_json, save_detections_csv, save_events_summary
+from .threat_utils import classify_label_safety
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
@@ -67,46 +68,6 @@ def open_source(source: str) -> cv2.VideoCapture:
         cap = cv2.VideoCapture(source)
 
     return cap
-
-
-def classify_label_safety(label: str) -> str:
-    """Heurystyczna kategoryzacja etykiety na safe/medium/danger.
-
-    Używana do kolorowania ramek wokół obiektów na wideo.
-    """
-
-    name = (label or "").strip().lower()
-
-    dangerous_keywords = {
-        "airplane",
-        "helicopter",
-        "bird",
-        "kite",
-        "balloon",
-        "drone",
-        "paraglider",
-        "hang glider",
-    }
-
-    medium_keywords = {
-        "car",
-        "truck",
-        "bus",
-        "train",
-        "boat",
-        "ship",
-        "motorcycle",
-        "bicycle",
-        "parking meter",
-    }
-
-    if name in dangerous_keywords:
-        return "danger"
-    if name in medium_keywords:
-        return "medium"
-    return "safe"
-
-
 def draw_detections(frame, detections: List[Detection]):
     for det in detections:
         x1, y1, x2, y2 = map(int, [det.x1, det.y1, det.x2, det.y2])

@@ -6,6 +6,7 @@ from typing import List, Optional
 import numpy as np
 
 from .config import DetectorConfig
+from .threat_utils import FrameGeometry, compute_threat_metrics
 
 
 @dataclass
@@ -73,42 +74,7 @@ class YoloDetector(BaseDetector):
             return detections
 
         height, width = frame.shape[:2]
-        frame_area = float(width * height) if width > 0 and height > 0 else 0.0
-
-        def _compute_threat(x1: float, y1: float, x2: float, y2: float, score: float) -> tuple[float, str, float, float]:
-            # Obszar i znormalizowany obszar detekcji
-            area = max(0.0, (x2 - x1) * (y2 - y1))
-            area_norm = area / frame_area if frame_area > 0 else 0.0
-
-            # Pozycja względem środka kadru (bliżej środka = potencjalnie większe zagrożenie)
-            if width > 0 and height > 0:
-                cx = ((x1 + x2) / 2.0) / width
-                cy = ((y1 + y2) / 2.0) / height
-                dx = cx - 0.5
-                dy = cy - 0.5
-                dist_center = (dx * dx + dy * dy) ** 0.5
-                proximity = 1.0 - min(dist_center / 0.5, 1.0)
-            else:
-                proximity = 0.0
-
-            # Prosta, heurystyczna funkcja punktowa 0-1
-            # - score (pewność modelu)
-            # - area_norm (jak duży obiekt w kadrze)
-            # - proximity (jak blisko środka kadru)
-            threat_score = (
-                0.6 * max(0.0, min(1.0, score))
-                + 0.3 * max(0.0, min(1.0, area_norm * 4.0))  # wzmocnienie dużych obiektów
-                + 0.1 * max(0.0, min(1.0, proximity))
-            )
-
-            if threat_score >= 0.6:
-                threat_level = "high"
-            elif threat_score >= 0.3:
-                threat_level = "medium"
-            else:
-                threat_level = "low"
-
-            return threat_score, threat_level, area, area_norm
+        frame_geom = FrameGeometry(width=width, height=height)
 
         for box in boxes:
             cls_id = int(box.cls[0]) if box.cls is not None else -1
@@ -119,8 +85,14 @@ class YoloDetector(BaseDetector):
             score = float(box.conf[0]) if box.conf is not None else 0.0
             label = result.names.get(cls_id, str(cls_id))
 
-            threat_score, threat_level, area, area_norm = _compute_threat(
-                float(x1), float(y1), float(x2), float(y2), score
+            threat_score, threat_level, area, area_norm = compute_threat_metrics(
+                label=label,
+                score=score,
+                x1=float(x1),
+                y1=float(y1),
+                x2=float(x2),
+                y2=float(y2),
+                frame=frame_geom,
             )
 
             detections.append(
